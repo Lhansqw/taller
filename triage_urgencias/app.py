@@ -18,7 +18,7 @@ from frontend.components import (
 from backend.state_manager import EmergencyDepartment
 
 st.set_page_config(
-    page_title="Triage — Emergency Department",
+    page_title="ED Triage Board",
     page_icon="🏥",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -30,64 +30,78 @@ st.set_page_config(
 )
 
 st.html("""<style>
-#MainMenu { visibility: hidden; }
-footer { visibility: hidden; }
-header { visibility: hidden; }
+:root {
+  --bg-deep: #0f172a;
+  --bg-panel: #1e293b;
+  --border: #334155;
+  --text-muted: #94a3b8;
+  --accent: #38bdf8;
+}
+#MainMenu, footer, header { visibility: hidden; }
+.block-container { padding-top: 1.25rem; max-width: 1400px; }
+h1 { font-size: 1.65rem !important; font-weight: 700 !important; letter-spacing: -0.02em; margin-bottom: 0.15rem !important; }
+.app-tagline { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; }
 .p1 { color: #ef4444 !important; }
 .p2 { color: #f97316 !important; }
 .p3 { color: #eab308 !important; }
 .p4 { color: #22c55e !important; }
 .p5 { color: #6b7280 !important; }
 .patient-card {
-border-left: 5px solid;
-padding: 10px 14px;
-margin: 6px 0;
-border-radius: 0 8px 8px 0;
-background: #1e293b;
-cursor: pointer;
-transition: transform 0.15s;
+  border-left: 4px solid;
+  padding: 12px 14px;
+  margin: 0 0 10px 0;
+  border-radius: 0 10px 10px 0;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  cursor: default;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.patient-card:hover { transform: translateX(3px); }
-.card-p1 { border-color: #ef4444; }
-.card-p2 { border-color: #f97316; }
-.card-p3 { border-color: #eab308; }
-.card-p4 { border-color: #22c55e; }
-.card-p5 { border-color: #6b7280; }
-.badge {
-display: inline-block;
-padding: 2px 8px;
-border-radius: 4px;
-font-size: 0.72rem;
-font-weight: bold;
+.patient-card:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
 }
+.card-p1 { border-left-color: #ef4444 !important; }
+.card-p2 { border-left-color: #f97316 !important; }
+.card-p3 { border-left-color: #eab308 !important; }
+.card-p4 { border-left-color: #22c55e !important; }
+.card-p5 { border-left-color: #6b7280 !important; }
 div[data-testid="metric-container"] {
-background: #1e293b;
-border: 1px solid #1e2d45;
-border-radius: 8px;
-padding: 10px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+div[data-testid="metric-container"] label {
+  font-size: 0.78rem !important;
+  color: var(--text-muted) !important;
 }
 .critical-alert {
-background: rgba(239,68,68,0.1);
-border: 1px solid #ef4444;
-border-radius: 8px;
-padding: 10px 14px;
-margin: 5px 0;
-animation: blink 1.5s infinite;
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.55);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
-@keyframes blink {
-0%, 100% { opacity: 1; }
-50% { opacity: 0.6; }
+section[data-testid="stSidebar"] {
+  background: linear-gradient(180deg, #0f172a 0%, #0c1222 100%);
+  border-right: 1px solid var(--border);
 }
-section[data-testid="stSidebar"] { background: #0f172a; }
-.section-title {
-font-size: 0.72rem;
-font-weight: 700;
-letter-spacing: 0.15em;
-color: #64748b;
-text-transform: uppercase;
-padding-bottom: 6px;
-border-bottom: 1px solid #1e2d45;
-margin-bottom: 12px;
+.section-title-lg {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin: 0 0 10px 0;
+}
+.right-rail {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
 }
 </style>""")
 
@@ -108,42 +122,51 @@ def main():
     init_session()
     ed: EmergencyDepartment = st.session_state.department
 
+    with st.sidebar:
+        render_sidebar_registration(ed)
+
+    st.markdown("# Emergency triage board")
+    st.markdown(
+        '<p class="app-tagline">Register new patients in the sidebar → pick someone from the queue → manage them in the panel on the right.</p>',
+        unsafe_allow_html=True,
+    )
+
     render_header(ed)
 
     overdue = ed.get_overdue_alerts()
     if overdue:
+        st.markdown('<p class="section-title-lg">Needs attention</p>', unsafe_allow_html=True)
         render_alert_banners(overdue)
 
-    left, center, right = st.columns([1.2, 2, 1], gap="small")
+    queue_col, rail_col = st.columns([2.15, 1], gap="large")
 
-    with left:
-        render_sidebar_registration(ed)
-
-    with center:
-        tabs = st.tabs(["🏥 Queue", "📊 Statistics", "📋 Activity log"])
-
+    with queue_col:
+        tabs = st.tabs(["Patient queue", "Shift statistics", "Activity log"])
         with tabs[0]:
             render_patient_queue(ed)
-
         with tabs[1]:
             render_statistics(ed)
-
         with tabs[2]:
-            st.subheader("Activity log")
+            st.caption("Last 30 events · newest first")
             for entry in reversed(ed.audit_log[-30:]):
                 st.caption(
                     f"`{entry['timestamp']}` **{entry['type']}** — {entry['description']}"
                 )
 
-    with right:
+    with rail_col:
+        st.markdown("##### Capacity")
+        st.caption("Available staff & beds (demo)")
         render_resources(ed)
         st.divider()
-
+        st.markdown("##### Selected patient")
         pid = st.session_state.selected_patient_id
         if pid:
             render_patient_detail(ed, pid)
         else:
-            st.info("👆 Select a patient to see details")
+            st.info(
+                "Choose a patient in the queue and tap **Open** to review vitals, "
+                "add notes, and update status."
+            )
 
 
 if __name__ == "__main__":
