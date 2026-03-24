@@ -1,8 +1,8 @@
-# 🏥 ED Triage & Patient Flow Board
+#  ED Triage & Patient Flow Board
 
 Academic demo — Python backend + Streamlit UI
 
-## 🚀 Setup & run
+##  Setup & run
 
 ```bash
 pip install -r requirements.txt
@@ -10,7 +10,7 @@ streamlit run app.py
 pytest tests/ -v
 ```
 
-## 🏗️ Layout
+##  Layout
 
 ```
 triage_urgencias/
@@ -26,7 +26,7 @@ triage_urgencias/
     └── test_triage_engine.py
 ```
 
-## 🧠 Triage logic
+##  Triage logic
 
 NEWS2-style scoring plus immediate **P1** triggers:
 
@@ -49,14 +49,14 @@ NEWS2-style scoring plus immediate **P1** triggers:
 | 4–6         | P3 YELLOW| 30 min      |
 | 1–3 or 0    | P4 GREEN | 120 min     |
 
-## 📦 Main modules
+##  Main modules
 
 - **`backend/models.py`** — `VitalSigns`, `Patient`, `TriageResult`, `HospitalResources`, `SYMPTOM_CATALOG`, `PRIORITY_INFO`  
 - **`backend/triage_engine.py`** — `calculate_triage`, `immediate_criteria`, `sort_queue`, `check_wait_time_violations`  
 - **`backend/state_manager.py`** — `EmergencyDepartment`: register patients, change status, stats, `load_demo()`  
 - **`frontend/components.py`** — header, registration form, queue, detail panel, resources, statistics  
 
-## 🧪 Tests
+##  Tests
 
 ```bash
 pytest tests/ -v --tb=short
